@@ -294,16 +294,47 @@ Both **ScanQA** and **SQA3D** require scene visuals from ScanNet.
 bash download_scanqa.sh  # Downloads JSON files to data/scanqa/
 ```
 
-2. **Prepare scene visuals** (required for evaluation):
-   - **Option A - Video input**: Pre-render ScanNet scenes as videos → `data/scanqa_videos/{scene_id}.mp4`
-   - **Option B - Multi-image input**: Pre-render multi-view images → `data/scanqa_images/{scene_id}/*.jpg`
-   - See [ScanNet download](http://www.scan-net.org/) and [ScanQA repo](https://github.com/ATR-DBI/ScanQA) for rendering scripts
+2. **Prepare ScanNet scene visuals** (required for full evaluation):
+   
+   **Where to get ScanNet data:**
+   - Apply for access at [ScanNet website](http://www.scan-net.org/)
+   - Download scenes from their dataset (requires agreement to terms)
+   - Use [ScanQA rendering scripts](https://github.com/ATR-DBI/ScanQA) to generate visuals
+   
+   **Directory structure options:**
+   - **Option A - Video input**: 
+     ```
+     data/scanqa_videos/
+     ├── scene0000_00.mp4
+     ├── scene0001_00.mp4
+     └── ...
+     ```
+     Pass via: `--scene_videos_root data/scanqa_videos`
+   
+   - **Option B - Multi-image input**: 
+     ```
+     data/scanqa_images/
+     ├── scene0000_00/
+     │   ├── 0.jpg
+     │   ├── 1.jpg
+     │   └── ...
+     ├── scene0001_00/
+     └── ...
+     ```
+     Pass via: `--scene_images_root data/scanqa_images`
 
 3. **Run evaluation**:
 ```bash
+# With scene images
 python eval_scanqa.py --model qwen \
     --data_root data/scanqa \
     --scene_images_root data/scanqa_images \
+    --output results/scanqa
+
+# With scene videos
+python eval_scanqa.py --model qwen \
+    --data_root data/scanqa \
+    --scene_videos_root data/scanqa_videos \
     --output results/scanqa
 ```
 
@@ -321,17 +352,50 @@ python scripts/score.py --folder ../../results/scanqa
    - Download from [SQA3D GitHub](https://github.com/SilongYong/SQA3D)
    - Extract to `SQA3D/` directory
 
-2. **Prepare scene visuals** (required for full evaluation):
-   - **Option A - Video input**: Pre-render ScanNet scenes as videos → `SQA3D/videos/{scene_id}.mp4`
-   - **Option B - Multi-image input**: Pre-render multi-view images → `SQA3D/images/{scene_id}/*.jpg`
-   - See [ScanNet download](http://www.scan-net.org/) for scene data
+2. **Prepare ScanNet scene visuals** (required for full evaluation):
+   
+   **Where to get ScanNet data:**
+   - Apply for access at [ScanNet website](http://www.scan-net.org/)
+   - Download scenes from their dataset (requires agreement to terms)
+   - SQA3D uses the same ScanNet v2 scenes as ScanQA
+   
+   **Directory structure options:**
+   - **Option A - Video input**: 
+     ```
+     SQA3D/videos/
+     ├── scene0000_00.mp4
+     ├── scene0001_00.mp4
+     └── ...
+     ```
+     Pass via: `--scene_videos_root SQA3D/videos`
+   
+   - **Option B - Multi-image input**: 
+     ```
+     SQA3D/images/
+     ├── scene0000_00/
+     │   ├── 0.jpg
+     │   ├── 1.jpg
+     │   └── ...
+     ├── scene0001_00/
+     └── ...
+     ```
+     Pass via: `--scene_images_root SQA3D/images`
+   
+   **Note:** You can reuse the same rendered ScanNet scenes for both ScanQA and SQA3D!
 
 3. **Run evaluation**:
 ```bash
-# With scene visuals
+# With scene images
 python eval_sqa3d.py --model qwen \
     --data_root SQA3D \
     --scene_images_root SQA3D/images \
+    --split val \
+    --output results/sqa3d
+
+# With scene videos
+python eval_sqa3d.py --model qwen \
+    --data_root SQA3D \
+    --scene_videos_root SQA3D/videos \
     --split val \
     --output results/sqa3d
 
