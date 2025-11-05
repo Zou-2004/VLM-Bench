@@ -1,6 +1,6 @@
 # VLM Evaluation Framework
 
-**Evaluate ANY Vision-Language Model on 5 major benchmarks with minimal code.**
+**Evaluate ANY Vision-Language Model on 6 major benchmarks with minimal code.**
 
 ## ✨ Key Feature: Works with YOUR Custom Model
 
@@ -23,10 +23,11 @@ That's it! See **`HOW_TO_ADD_YOUR_MODEL.py`** for complete instructions.
 | **CV-Bench** | MCQ | 2D/3D vision | ~1000 | ✅ |
 | **3DSRBench** | MCQ | 3D spatial reasoning | ~800 | ✅ |
 | **MMSI-Bench** | MCQ | Multi-image spatial | ~600 | ✅ |
-| **BLINK** | MCQ | Perception (7 tasks) | ~1400 | ✅ |
+| **BLINK** | MCQ | Perception (14 tasks) | ~1400 | ✅ |
 | **ScanQA** | Open-ended | 3D scene QA | 800 | ✅ (Q&A only) * |
+| **SQA3D** | Open-ended | Situated 3D QA | 3200+ | ✅ (Q&A only) * |
 
-\* ScanQA requires scene images/videos from ScanNet (see [ScanQA Setup](#scanqa-setup))
+\* ScanQA and SQA3D require scene images/videos from ScanNet (see [3D Scene Setup](#3d-scene-setup))
 
 ---
 
@@ -68,6 +69,7 @@ MLLM_eval/
 │
 ├── eval_mcq.py                  ← Run MCQ benchmarks
 ├── eval_scanqa.py               ← Run ScanQA
+├── eval_sqa3d.py                ← Run SQA3D
 ├── metrics.py                   ← Evaluation metrics
 │
 ├── models/
@@ -79,7 +81,8 @@ MLLM_eval/
 │   ├── three_dsr.py
 │   ├── mmsi.py
 │   ├── blink.py
-│   └── scanqa.py
+│   ├── scanqa.py
+│   └── sqa3d.py
 │
 ├── tables/
 │   └── format_tables.py         ← Generate publication tables
@@ -212,9 +215,9 @@ Output:
 ✅ **Multiple modalities** - Single/multi-image, video support  
 
 ### Features:
-✅ **5 major benchmarks** (CV-Bench, 3DSRBench, MMSI, BLINK, ScanQA)  
+✅ **6 major benchmarks** (CV-Bench, 3DSRBench, MMSI, BLINK, ScanQA, SQA3D)  
 ✅ **Deterministic** - Reproducible results  
-✅ **Auto-download** - 4/5 benchmarks fetch automatically  
+✅ **Auto-download** - 4/6 benchmarks fetch automatically  
 ✅ **Production-ready** - Error handling, progress bars, logging  
 ✅ **Well-documented** - Clear examples for custom models  
 
@@ -278,7 +281,11 @@ export HF_ENDPOINT=https://hf-mirror.com  # Use mirror if needed
 - Check that model is actually running inference (look for responses in output)
 - See `BUGFIXES.md` for recently resolved issues
 
-#### ScanQA Setup
+#### 3D Scene Setup
+
+Both **ScanQA** and **SQA3D** require scene visuals from ScanNet.
+
+##### ScanQA Setup
 
 **Note:** ScanQA requires scene images/videos from ScanNet. The automatic download only gets Q&A data.
 
@@ -305,6 +312,37 @@ python eval_scanqa.py --model qwen \
 cd data/scanqa
 python scripts/score.py --folder ../../results/scanqa
 ```
+
+##### SQA3D Setup
+
+**Note:** SQA3D requires scene images/videos from ScanNet. The automatic download only gets Q&A data.
+
+1. **Download SQA3D Q&A data** (if not already done):
+   - Download from [SQA3D GitHub](https://github.com/SilongYong/SQA3D)
+   - Extract to `SQA3D/` directory
+
+2. **Prepare scene visuals** (required for full evaluation):
+   - **Option A - Video input**: Pre-render ScanNet scenes as videos → `SQA3D/videos/{scene_id}.mp4`
+   - **Option B - Multi-image input**: Pre-render multi-view images → `SQA3D/images/{scene_id}/*.jpg`
+   - See [ScanNet download](http://www.scan-net.org/) for scene data
+
+3. **Run evaluation**:
+```bash
+# With scene visuals
+python eval_sqa3d.py --model qwen \
+    --data_root SQA3D \
+    --scene_images_root SQA3D/images \
+    --split val \
+    --output results/sqa3d
+
+# Text-only mode (for testing without visuals)
+python eval_sqa3d.py --model qwen \
+    --data_root SQA3D \
+    --split val \
+    --max_samples 10
+```
+
+4. **Metrics**: Statistics are automatically computed (by scene, answer type, question type)
 
 ## Adding New Models
 
