@@ -228,6 +228,8 @@ Output:
 1. **`README.md`** (this file) - Overview + quick start
 2. **`QUICKSTART.md`** - 5-minute tutorial with examples
 3. **`HOW_TO_ADD_YOUR_MODEL.py`** - Complete template for custom models
+4. **`SCANNET_SETUP.md`** - Detailed guide for ScanNet data setup (ScanQA + SQA3D)
+5. **`BUGFIXES.md`** - Known issues and recent bug fixes
 
 ---
 
@@ -281,132 +283,105 @@ export HF_ENDPOINT=https://hf-mirror.com  # Use mirror if needed
 - Check that model is actually running inference (look for responses in output)
 - See `BUGFIXES.md` for recently resolved issues
 
-#### 3D Scene Setup
+#### 3D Scene Setup (ScanQA + SQA3D)
 
-Both **ScanQA** and **SQA3D** require scene visuals from ScanNet.
+Both **ScanQA** and **SQA3D** use the same **ScanNet v2** scenes. Download ScanNet data **once** and both benchmarks can use it!
 
-##### ScanQA Setup
+> 📘 **Detailed guide:** See [SCANNET_SETUP.md](SCANNET_SETUP.md) for complete instructions on downloading and rendering ScanNet data.
 
-**Note:** ScanQA requires scene images/videos from ScanNet. The automatic download only gets Q&A data.
+##### Step 1: Prepare ScanNet Data (Shared)
 
-1. **Download ScanQA Q&A data** (automatic):
+**Download ScanNet scenes** (one-time setup for both benchmarks):
+
+1. **Get ScanNet access:**
+   - Apply at [ScanNet website](http://www.scan-net.org/)
+   - Requires agreeing to terms of use
+   - Download the ScanNet v2 dataset
+
+2. **Render scene visuals** using [ScanQA rendering scripts](https://github.com/ATR-DBI/ScanQA):
+   
+   **Choose ONE format:**
+   
+   - **Option A - Videos** (recommended for efficiency):
+     ```
+     scannet_data/
+     └── videos/
+         ├── scene0000_00.mp4
+         ├── scene0001_00.mp4
+         ├── scene0002_00.mp4
+         └── ...
+     ```
+   
+   - **Option B - Multi-view images** (better quality):
+     ```
+     scannet_data/
+     └── images/
+         ├── scene0000_00/
+         │   ├── 0.jpg
+         │   ├── 1.jpg
+         │   └── ...
+         ├── scene0001_00/
+         └── ...
+     ```
+
+##### Step 2: Download Q&A Data
+
 ```bash
-bash download_scanqa.sh  # Downloads JSON files to data/scanqa/
+# ScanQA Q&A data (automatic)
+bash download_scanqa.sh
+
+# SQA3D Q&A data (manual)
+# Download from: https://github.com/SilongYong/SQA3D
+# Extract to: SQA3D/
 ```
 
-2. **Prepare ScanNet scene visuals** (required for full evaluation):
-   
-   **Where to get ScanNet data:**
-   - Apply for access at [ScanNet website](http://www.scan-net.org/)
-   - Download scenes from their dataset (requires agreement to terms)
-   - Use [ScanQA rendering scripts](https://github.com/ATR-DBI/ScanQA) to generate visuals
-   
-   **Directory structure options:**
-   - **Option A - Video input**: 
-     ```
-     data/scanqa_videos/
-     ├── scene0000_00.mp4
-     ├── scene0001_00.mp4
-     └── ...
-     ```
-     Pass via: `--scene_videos_root data/scanqa_videos`
-   
-   - **Option B - Multi-image input**: 
-     ```
-     data/scanqa_images/
-     ├── scene0000_00/
-     │   ├── 0.jpg
-     │   ├── 1.jpg
-     │   └── ...
-     ├── scene0001_00/
-     └── ...
-     ```
-     Pass via: `--scene_images_root data/scanqa_images`
+##### Step 3: Run Evaluations
 
-3. **Run evaluation**:
+**ScanQA evaluation:**
 ```bash
-# With scene images
+# With videos (Option A)
 python eval_scanqa.py --model qwen \
     --data_root data/scanqa \
-    --scene_images_root data/scanqa_images \
+    --scene_videos_root scannet_data/videos \
     --output results/scanqa
 
-# With scene videos
+# With images (Option B)
 python eval_scanqa.py --model qwen \
     --data_root data/scanqa \
-    --scene_videos_root data/scanqa_videos \
+    --scene_images_root scannet_data/images \
     --output results/scanqa
+
+# Compute metrics
+cd data/scanqa && python scripts/score.py --folder ../../results/scanqa
 ```
 
-4. **Compute metrics**:
+**SQA3D evaluation:**
 ```bash
-cd data/scanqa
-python scripts/score.py --folder ../../results/scanqa
-```
-
-##### SQA3D Setup
-
-**Note:** SQA3D requires scene images/videos from ScanNet. The automatic download only gets Q&A data.
-
-1. **Download SQA3D Q&A data** (if not already done):
-   - Download from [SQA3D GitHub](https://github.com/SilongYong/SQA3D)
-   - Extract to `SQA3D/` directory
-
-2. **Prepare ScanNet scene visuals** (required for full evaluation):
-   
-   **Where to get ScanNet data:**
-   - Apply for access at [ScanNet website](http://www.scan-net.org/)
-   - Download scenes from their dataset (requires agreement to terms)
-   - SQA3D uses the same ScanNet v2 scenes as ScanQA
-   
-   **Directory structure options:**
-   - **Option A - Video input**: 
-     ```
-     SQA3D/videos/
-     ├── scene0000_00.mp4
-     ├── scene0001_00.mp4
-     └── ...
-     ```
-     Pass via: `--scene_videos_root SQA3D/videos`
-   
-   - **Option B - Multi-image input**: 
-     ```
-     SQA3D/images/
-     ├── scene0000_00/
-     │   ├── 0.jpg
-     │   ├── 1.jpg
-     │   └── ...
-     ├── scene0001_00/
-     └── ...
-     ```
-     Pass via: `--scene_images_root SQA3D/images`
-   
-   **Note:** You can reuse the same rendered ScanNet scenes for both ScanQA and SQA3D!
-
-3. **Run evaluation**:
-```bash
-# With scene images
+# With videos (Option A)
 python eval_sqa3d.py --model qwen \
     --data_root SQA3D \
-    --scene_images_root SQA3D/images \
+    --scene_videos_root scannet_data/videos \
     --split val \
     --output results/sqa3d
 
-# With scene videos
+# With images (Option B)
 python eval_sqa3d.py --model qwen \
     --data_root SQA3D \
-    --scene_videos_root SQA3D/videos \
+    --scene_images_root scannet_data/images \
     --split val \
     --output results/sqa3d
 
-# Text-only mode (for testing without visuals)
+# Text-only mode (testing without visuals)
 python eval_sqa3d.py --model qwen \
     --data_root SQA3D \
     --split val \
     --max_samples 10
 ```
 
-4. **Metrics**: Statistics are automatically computed (by scene, answer type, question type)
+**Summary:** 
+- ✅ Download ScanNet **once** → `scannet_data/videos/` or `scannet_data/images/`
+- ✅ Both ScanQA and SQA3D use the same `--scene_videos_root` or `--scene_images_root`
+- ✅ No duplication needed!
 
 ## Adding New Models
 

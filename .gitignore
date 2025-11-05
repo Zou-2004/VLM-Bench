@@ -74,10 +74,21 @@ datasets/*.tar
 datasets/*.zip
 datasets/*.gz
 
+# ScanNet data (shared by ScanQA + SQA3D)
+scannet_data/
+
 # ScanQA data (large)
 data/scanqa/data/
 data/scanqa_images/
 data/scanqa_videos/
+
+# SQA3D data (large)
+SQA3D.zip
+SQA3D/SQA3D
+SQA3D/videos/
+SQA3D/video/
+SQA3D/images/
+SQA3D/bird/
 
 # Environment
 .env
